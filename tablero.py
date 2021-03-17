@@ -117,21 +117,31 @@ class Tablero:
             for casilla in fila:
                 casilla.visitado = False
 
-    def busqueda_de_estados_BFS(self, estado_inicial):
-        cola = [estado_inicial]
+    def expandirSucesores(self, estado):
+        acciones = [self.accion.arriba, self.accion.abajo, self.accion.derecha, self.accion.izquierda]
+        sucesores = self.agent.funcion_transicion(estado, acciones)
+        sucesores = self.habilitarSucesores(sucesores)
+        self.designarPadreASucesores(sucesores, estado)
+        return sucesores
+
+    def busqueda_de_estados_BFS(self, estados_iniciales):
+        # conjunto de colas para varios BFSs
+        colas = []
+        colas.extend([[estado_inicial] for estado_inicial in estados_iniciales])
         #cerrado = []
-        while len(cola) != 0:
-            estado = cola.pop(0)
-            acciones = [self.accion.arriba, self.accion.abajo, self.accion.derecha, self.accion.izquierda]
-            sucesores = self.agent.funcion_transicion(estado, acciones)
-            sucesores = self.habilitarSucesores(sucesores)
-            self.designarPadreASucesores(sucesores, estado)
-            cola.extend(sucesores)
+        num_expansion = 1
+        while sum([len(cola) for cola in colas]) != 0:
+            self.mostrarCasillas()
+            print(f"Expansion numero {num_expansion}:")
+            num_expansion += 1
+            for cola in colas:
+                if len(cola) != 0:
+                    estado = cola.pop(0)
+                    cola.extend(self.expandirSucesores(estado))
         self.limpiarVisitados()
 
     def resolver(self):
-        for tuberia in self.pos_tuberias:
-            self.busqueda_de_estados_BFS(tuberia)
+        self.busqueda_de_estados_BFS(self.pos_tuberias)
 
     def caminoParaMario(self ):
         # Primero añadimos la posicion de mario
@@ -150,6 +160,6 @@ class Tablero:
 
     def mostrarCaminoMario(self):
         num_saltos, camino_nodos = self.caminoParaMario()
-        print(f"Mario necesita {num_saltos} para llegar a la tuberia mas cercana")
+        print(f"Mario necesita {num_saltos} pasos para llegar a la tuberia mas cercana")
         print(f"A traves de las siguientes posiciones de casillas\
         {' -> '.join([repr((posicion[0] + 1, posicion[1] + 1)) for posicion in camino_nodos])}")
